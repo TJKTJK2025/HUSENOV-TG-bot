@@ -1,32 +1,34 @@
-# keep_alive + Telegram bot на aiogram v2.25.1
-from flask import Flask
-from threading import Thread
+from flask import Flask, request
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils import executor
+import logging
+import os
 
-# ===== Flask для keep_alive =====
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Бот работает!"
-
-def run():
-    app.run(host='0.0.0.0', port=3000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-# ===== Токен и айди напрямую =====
+# ===== Настройки =====
 TOKEN = "8038703445:AAHq-7WaSpel99M6sKiXWwz7mugCsv7jw64"
 ADMIN_ID = 7574702101
+WEBHOOK_PATH = f"/{TOKEN}"
+WEBHOOK_URL = f"https://husenov-ff-bot.onrender.com{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+logging.basicConfig(level=logging.INFO)
 
-# ===== Основные кнопки =====
+# ===== Flask =====
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Бот работает!"
+
+# ===== Вебхук для Telegram =====
+@app.route(WEBHOOK_PATH, methods=["POST"])
+def webhook():
+    update = types.Update(**request.json)
+    dp.process_update(update)
+    return "OK"
+
+# ===== Кнопки =====
 main_menu = ReplyKeyboardMarkup(resize_keyboard=True)
 main_menu.add(KeyboardButton("💎 Алмаз Харидан"))
 main_menu.add(KeyboardButton("⚙ Настройка"))
@@ -35,7 +37,7 @@ back_menu = ReplyKeyboardMarkup(resize_keyboard=True)
 back_menu.add(KeyboardButton("⬅️ Ба Кафо"))
 back_menu.add(KeyboardButton("🏠 Меню"))
 
-# ===== Inline кнопки алмазов (ярко и геймерски) =====
+# Inline кнопки алмазов
 def get_diamond_inline():
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
@@ -49,7 +51,7 @@ def get_diamond_inline():
     )
     return kb
 
-# ===== Inline кнопки телефонов (ярко и красиво) =====
+# Inline кнопки телефонов
 phone_inline = InlineKeyboardMarkup(row_width=3)
 phone_inline.add(
     InlineKeyboardButton("📱 Самсунг", callback_data="phone_samsung"),
@@ -60,25 +62,22 @@ phone_inline.add(
     InlineKeyboardButton("📱 ЗТЕ", callback_data="phone_zte")
 )
 
-# ===== Кнопка покупки премиум настроек =====
+# Кнопка покупки премиум настроек
 buy_premium_inline = InlineKeyboardMarkup(row_width=1)
 buy_premium_inline.add(
     InlineKeyboardButton("🎁 Buy The Premium 💎 Settings ⚙ 20 🇹🇯", callback_data="buy_premium"),
     InlineKeyboardButton("⬅️ Назад", callback_data="back_phone")
 )
 
-# ===== /start =====
+# ===== Handlers =====
 @dp.message_handler(commands=['start'])
 async def start_handler(message: types.Message):
     await message.answer(
-        "╔════════════════════════════════════╗\n"
         "🎄 Хуш Омадед Ба Боти FF - HUSANOV! 🎄\n"
-        "╚════════════════════════════════════╝\n\n"
         "Барои Алмаз Харидан ё Настройка ⚙ Free Fire Лутфан Чизи Мехостагиатонро Интихоб Кунед!🎁",
         reply_markup=main_menu
     )
 
-# ===== Основной хэндлер сообщений =====
 @dp.message_handler()
 async def main_handler(message: types.Message):
     text = message.text
@@ -93,7 +92,7 @@ async def main_handler(message: types.Message):
     else:
         await message.answer("Выберите действие!", reply_markup=main_menu)
 
-# ===== Callback для телефона =====
+# Callback для телефона
 @dp.callback_query_handler(lambda c: c.data.startswith("phone_"))
 async def phone_callback(callback_query: types.CallbackQuery):
     data = callback_query.data
@@ -122,7 +121,7 @@ async def phone_callback(callback_query: types.CallbackQuery):
 
     await bot.send_message(callback_query.from_user.id, settings_text, reply_markup=buy_premium_inline)
 
-# ===== Callback для кнопки "Buy" и "Назад" =====
+# Callback для кнопки "Buy" и "Назад"
 @dp.callback_query_handler(lambda c: c.data in ["buy_premium", "back_phone"])
 async def buy_or_back_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
@@ -131,7 +130,7 @@ async def buy_or_back_callback(callback_query: types.CallbackQuery):
     elif callback_query.data == "back_phone":
         await bot.send_message(callback_query.from_user.id, "Намуди ⚙ Телефонатонро 📱 Интихоб Кунед!", reply_markup=phone_inline)
 
-# ===== Обработка чеков и фото =====
+# Обработка чеков и фото
 @dp.message_handler(content_types=[types.ContentType.DOCUMENT, types.ContentType.PHOTO])
 async def handle_receipt(message: types.Message):
     if message.content_type == "document":
@@ -141,26 +140,23 @@ async def handle_receipt(message: types.Message):
         file_id = message.photo[-1].file_id
         await bot.send_photo(ADMIN_ID, file_id)
 
-    # Сообщение пользователю
     await message.answer(
         "Спасибо За Выбор 🗳 Наших Настроек! ⚙\n"
         "Скоро С Вами Свяжется 🔗 Наш Администратор! 👨‍✈️"
     )
-
-    # Уведомление админу
     info_msg = (
         f"У Вас Заказ 🌆 Настроек! ⚙\n"
         f"Покупатель 🛒: @{message.from_user.username if message.from_user.username else message.from_user.id}"
     )
     await bot.send_message(ADMIN_ID, info_msg)
 
-# ===== Обработка выбора алмазов =====
-@dp.callback_query_handler(lambda c: c.data.endswith("💎"))
-async def diamond_callback(callback_query: types.CallbackQuery):
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {callback_query.data}\nСкиньте чек после оплаты!", reply_markup=None)
-
-# ===== Запуск бота =====
+# ===== Запуск Flask =====
 if __name__ == "__main__":
-    keep_alive()
-    executor.start_polling(dp, skip_updates=True)
+    # Установим вебхук
+    import asyncio
+    async def on_startup():
+        await bot.set_webhook(WEBHOOK_URL)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(on_startup())
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
