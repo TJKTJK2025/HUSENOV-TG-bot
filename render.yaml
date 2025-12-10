@@ -1,8 +1,9 @@
 services:
   - type: web
-    name: husenov-ff-bot      # только маленькие буквы, через дефис
+    name: husenov-ff-bot
     env: python
     region: frankfurt
     plan: free
-    buildCommand: "pip install -r requirements.txt"
+    pythonVersion: 3.11  # Обязательно Python 3.11 для aiogram 2.25.1
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
     startCommand: "python bot.py"
