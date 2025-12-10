@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: husenov-ff-bot
+    name: husenov-ff-bot      # только маленькие буквы, через дефис
     env: python
     region: frankfurt
     plan: free
