@@ -1,6 +1,6 @@
 services:
-  - type: web
-    name: husenov-ff-bot      # маленькие буквы через дефис
+  - type: worker          # background worker, а не web
+    name: husenov-ff-bot
     env: python
     region: frankfurt
     plan: free
