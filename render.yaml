@@ -1,6 +1,6 @@
 services:
-  - type: web
-    name: husenov-ff-bot
+  - type: web            # веб-сервис для keep_alive
+    name: husenov-ff-bot # имя сервиса (маленькие буквы и дефис)
     env: python
     region: frankfurt
     plan: free
