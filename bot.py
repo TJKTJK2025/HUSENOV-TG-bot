@@ -1,13 +1,32 @@
+# keep_alive + Telegram bot на aiogram v2.25.1
+from flask import Flask
+from threading import Thread
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 
+# ===== Flask для keep_alive =====
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Бот работает!"
+
+def run():
+    app.run(host='0.0.0.0', port=3000)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# ===== Токен и айди напрямую =====
 TOKEN = "8038703445:AAHq-7WaSpel99M6sKiXWwz7mugCsv7jw64"
-ADMIN_ID = 7574702101  # Айди админа
+ADMIN_ID = 7574702101
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# ===== Кнопки =====
+# ===== Основные кнопки =====
 main_menu = ReplyKeyboardMarkup(resize_keyboard=True)
 main_menu.add(KeyboardButton("💎 Алмаз Харидан"))
 main_menu.add(KeyboardButton("⚙ Настройка"))
@@ -16,29 +35,36 @@ back_menu = ReplyKeyboardMarkup(resize_keyboard=True)
 back_menu.add(KeyboardButton("⬅️ Ба Кафо"))
 back_menu.add(KeyboardButton("🏠 Меню"))
 
-# ===== Inline кнопки прайс-листа =====
-def get_price_inline():
+# ===== Inline кнопки алмазов (ярко и геймерски) =====
+def get_diamond_inline():
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
-        InlineKeyboardButton("💎100 — 10 🇹🇯s", callback_data="100💎"),
-        InlineKeyboardButton("💎200 — 20 🇹🇯s", callback_data="200💎"),
-        InlineKeyboardButton("💎300 — 30 🇹🇯s", callback_data="300💎"),
-        InlineKeyboardButton("💎400 — 40 🇹🇯s", callback_data="400💎"),
-        InlineKeyboardButton("💎500 — 50 🇹🇯s", callback_data="500💎"),
-        InlineKeyboardButton("💎1000 — 100 🇹🇯s", callback_data="1000💎"),
-        InlineKeyboardButton("💎2000 — 200 🇹🇯s", callback_data="2000💎"),
-        InlineKeyboardButton("🗓️ Лайт — 10 🇹🇯s", callback_data="Ваучер Лайт"),
-        InlineKeyboardButton("🗓️ Ҳафта — 15 🇹🇯s", callback_data="Ваучер Ҳафта"),
-        InlineKeyboardButton("🗓️ Моҳ — 90 🇹🇯s", callback_data="Ваучер Моҳ"),
-        InlineKeyboardButton("🎫 Буях Пропуск — 15 🇹🇯s", callback_data="Буях Пропуск")
+        InlineKeyboardButton("💎 100 — 10 🇹🇯", callback_data="100💎"),
+        InlineKeyboardButton("💎 200 — 20 🇹🇯", callback_data="200💎"),
+        InlineKeyboardButton("💎 300 — 30 🇹🇯", callback_data="300💎"),
+        InlineKeyboardButton("💎 400 — 40 🇹🇯", callback_data="400💎"),
+        InlineKeyboardButton("💎 500 — 50 🇹🇯", callback_data="500💎"),
+        InlineKeyboardButton("💎 1000 — 100 🇹🇯", callback_data="1000💎"),
+        InlineKeyboardButton("💎 2000 — 200 🇹🇯", callback_data="2000💎")
     )
     return kb
 
-# ===== Кнопки оплаты =====
-pay_menu = InlineKeyboardMarkup(row_width=2)
-pay_menu.add(
-    InlineKeyboardButton("D/City 💳", url="http://pay.expresspay.tj/?A=9762000169349346&s=9.5&c=&f1=133"),
-    InlineKeyboardButton("⬅️ Ба Кафо", callback_data="back")
+# ===== Inline кнопки телефонов (ярко и красиво) =====
+phone_inline = InlineKeyboardMarkup(row_width=3)
+phone_inline.add(
+    InlineKeyboardButton("📱 Самсунг", callback_data="phone_samsung"),
+    InlineKeyboardButton("📱 Редми", callback_data="phone_redmi"),
+    InlineKeyboardButton("📱 Айфон", callback_data="phone_iphone"),
+    InlineKeyboardButton("📱 Хуавей", callback_data="phone_huawei"),
+    InlineKeyboardButton("📱 Поко", callback_data="phone_poco"),
+    InlineKeyboardButton("📱 ЗТЕ", callback_data="phone_zte")
+)
+
+# ===== Кнопка покупки премиум настроек =====
+buy_premium_inline = InlineKeyboardMarkup(row_width=1)
+buy_premium_inline.add(
+    InlineKeyboardButton("🎁 Buy The Premium 💎 Settings ⚙ 20 🇹🇯", callback_data="buy_premium"),
+    InlineKeyboardButton("⬅️ Назад", callback_data="back_phone")
 )
 
 # ===== /start =====
@@ -56,61 +82,54 @@ async def start_handler(message: types.Message):
 @dp.message_handler()
 async def main_handler(message: types.Message):
     text = message.text
-
     if text == "💎 Алмаз Харидан":
-        await message.answer("Барои Алмаз Харидори Кардан Айдии Худатон - Ро Ба Ман Фиристед!", reply_markup=back_menu)
-
+        await message.answer("Выберите количество алмазов:", reply_markup=get_diamond_inline())
     elif text == "⚙ Настройка":
-        await message.answer("⚙ Настройка Free Fire: Функция позже", reply_markup=back_menu)
-
+        await message.answer("Намуди ⚙ Телефонатонро 📱 Интихоб Кунед!", reply_markup=phone_inline)
     elif text == "⬅️ Ба Кафо":
-        await message.answer("Барои Давом Лутфан Чизи Мехостагиатонро Интихоб Кунед!🎁", reply_markup=main_menu)
-
+        await message.answer("Барои Давом Лутфан Чизи Мехостагиатонро Интихоб Кунед!", reply_markup=main_menu)
     elif text == "🏠 Меню":
         await message.answer("Меню", reply_markup=main_menu)
-
     else:
-        # Пользователь ввёл айди
-        user_id = text
-        price_list_msg = (
-            "✨ Прайс Лист Алмазҳо 💎\n"
-            "────────────────────\n"
-            "💎100 — 10 🇹🇯\n"
-            "💎200 — 20 🇹🇯\n"
-            "💎300 — 30 🇹🇯\n"
-            "💎400 — 40 🇹🇯\n"
-            "💎500 — 50 🇹🇯\n"
-            "💎1000 — 100 🇹🇯\n"
-            "💎2000 — 200 🇹🇯\n"
-            "🗓️ Лайт — 10 🇹🇯\n"
-            "🗓️ Ҳафта — 15 🇹🇯\n"
-            "🗓️ Моҳ — 90 🇹🇯\n"
-            "🎫 Буях Пропуск — 15 🇹🇯\n"
-            "────────────────────"
-        )
-        await message.answer(f"Айдии Шумо : {user_id}\n\n{price_list_msg}", reply_markup=get_price_inline())
+        await message.answer("Выберите действие!", reply_markup=main_menu)
 
-# ===== Обработка выбора товара =====
-@dp.callback_query_handler(lambda c: c.data != "back")
-async def price_callback(callback_query: types.CallbackQuery):
+# ===== Callback для телефона =====
+@dp.callback_query_handler(lambda c: c.data.startswith("phone_"))
+async def phone_callback(callback_query: types.CallbackQuery):
     data = callback_query.data
     await bot.answer_callback_query(callback_query.id)
 
-    # Сообщение оплаты с рамкой и эмодзи
-    await bot.send_message(
-        callback_query.from_user.id,
-        f"╔═══════════════════════╗\n"
-        f"🎁 Вы выбрали: {data}\n"
-        f"╚═══════════════════════╝\n\n"
-        f"Оплата Кардан!\nДар Хозира Замон Мо Танхо Душанбе Сити Дорем!\nБа Наздики Мо Дигар Кортхоро Дохил Мекунем!\n\nСкиньте чек после оплаты",
-        reply_markup=pay_menu
-    )
+    settings_text = ""
+    if data == "phone_samsung":
+        settings_text = "Обзор : 178\nКолимматор : 170\n2Х Прицел : 100\n4Х Прицел : 100\nСнайперский Прицел : 60\nСвободный Обзор : 10"
+        await bot.send_message(callback_query.from_user.id, settings_text, reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton("⬅️ Назад", callback_data="back_phone")))
+        return
+    elif data == "phone_redmi":
+        settings_text = ("Обзор : 170\nКолимматор : 100\n2Х Прицел : 65\n4Х Прицел : 60\nСнайперский Прицел : 60\nСвободный Обзор : 100\n"
+                         "У Нас Ещё Есть Премиум Настройки Которые Стоят 10 🇹🇯\nИ 87% Летит В Голову!\nЕсли Хотите Их Преобрести Нажмите На Кнопку Внизу!")
+    elif data == "phone_iphone":
+        settings_text = ("Обзор : 100\nКолимматор : 0\n2Х Прицел : 100\n4Х Прицел : 100\nСнайперский Прицел : 60\nСвободный Обзор : 0\n"
+                         "У Нас Ещё Есть Премиум Настройки Которые Стоят 10 🇹🇯\nИ 87% Летит В Голову!\nЕсли Хотите Их Преобрести Нажмите На Кнопку Внизу!")
+    elif data == "phone_huawei":
+        settings_text = ("Обзор : 170\nКолимматор : 170\n2Х Прицел : 200\n4Х Прицел : 200\nСнайперский Прицел : 20\nСвободный Обзор : 10\n"
+                         "У Нас Ещё Есть Премиум Настройки Которые Стоят 10 🇹🇯\nИ 87% Летит В Голову!\nЕсли Хотите Их Преобрести Нажмите На Кнопку Внизу!")
+    elif data == "phone_poco":
+        settings_text = ("Обзор : 180\nКолимматор : 180\n2Х Прицел : 107\n4Х Прицел : 105\nСнайперский Прицел : 10\nСвободный Обзор : 200\n"
+                         "У Нас Ещё Есть Премиум Настройки Которые Стоят 10 🇹🇯\nИ 87% Летит В Голову!\nЕсли Хотите Их Преобрести Нажмите На Кнопку Внизу!")
+    elif data == "phone_zte":
+        settings_text = ("Обзор : 100\nКолимматор : 100\n2Х Прицел : 100\n4Х Прицел : 100\nСнайперский Прицел : 60\nСвободный Обзор : 200\n"
+                         "У Нас Ещё Есть Премиум Настройки Которые Стоят 10 🇹🇯\nИ 87% Летит В Голову!\nЕсли Хотите Их Преобрести Нажмите На Кнопку Внизу!")
 
-# ===== Кнопка "⬅️ Ба Кафо" =====
-@dp.callback_query_handler(lambda c: c.data=="back")
-async def back_callback(callback_query: types.CallbackQuery):
+    await bot.send_message(callback_query.from_user.id, settings_text, reply_markup=buy_premium_inline)
+
+# ===== Callback для кнопки "Buy" и "Назад" =====
+@dp.callback_query_handler(lambda c: c.data in ["buy_premium", "back_phone"])
+async def buy_or_back_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, "Барои Давом Лутфан Чизи Мехостагиатонро Интихоб Кунед!🎁", reply_markup=main_menu)
+    if callback_query.data == "buy_premium":
+        await bot.send_message(callback_query.from_user.id, "Напишите 🖋 Модель 🧩 Своего Телефона! 📱\nИ Скиньте Чек 🧾 После Оплаты 📪")
+    elif callback_query.data == "back_phone":
+        await bot.send_message(callback_query.from_user.id, "Намуди ⚙ Телефонатонро 📱 Интихоб Кунед!", reply_markup=phone_inline)
 
 # ===== Обработка чеков и фото =====
 @dp.message_handler(content_types=[types.ContentType.DOCUMENT, types.ContentType.PHOTO])
@@ -122,24 +141,26 @@ async def handle_receipt(message: types.Message):
         file_id = message.photo[-1].file_id
         await bot.send_photo(ADMIN_ID, file_id)
 
-    # Сообщение пользователю с кнопкой "Чек!"
+    # Сообщение пользователю
     await message.answer(
-        "Спасибо за покупку! 💎\n"
-        "Алмазҳо дар давоми 5-10 дақиқа ба шумо меоянд.\n"
-        "Поддержка: @FF_HUSEINOV",
-        reply_markup=InlineKeyboardMarkup().add(
-            InlineKeyboardButton("Чек!", callback_data="check")
-        )
+        "Спасибо За Выбор 🗳 Наших Настроек! ⚙\n"
+        "Скоро С Вами Свяжется 🔗 Наш Администратор! 👨‍✈️"
     )
 
-    # Уведомление админу с айди игрока
+    # Уведомление админу
     info_msg = (
-        f"🎉 Новый заказ!\n"
-        f"Айди игрока: {message.from_user.id}\n"
-        f"Отправил чек для получения алмазов."
+        f"У Вас Заказ 🌆 Настроек! ⚙\n"
+        f"Покупатель 🛒: @{message.from_user.username if message.from_user.username else message.from_user.id}"
     )
     await bot.send_message(ADMIN_ID, info_msg)
 
+# ===== Обработка выбора алмазов =====
+@dp.callback_query_handler(lambda c: c.data.endswith("💎"))
+async def diamond_callback(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали: {callback_query.data}\nСкиньте чек после оплаты!", reply_markup=None)
+
 # ===== Запуск бота =====
 if __name__ == "__main__":
+    keep_alive()
     executor.start_polling(dp, skip_updates=True)
