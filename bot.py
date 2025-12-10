@@ -3,10 +3,11 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import logging
 import os
+import asyncio
 
 # ===== Настройки =====
-TOKEN = "8038703445:AAHq-7WaSpel99M6sKiXWwz7mugCsv7jw64"
-ADMIN_ID = 7574702101
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8038703445:AAHq-7WaSpel99M6sKiXWwz7mugCsv7jw64")  # можно через Render Environment Variable
+ADMIN_ID = int(os.getenv("ADMIN_TELEGRAM_ID", 7574702101))
 WEBHOOK_PATH = f"/{TOKEN}"
 WEBHOOK_URL = f"https://husenov-ff-bot.onrender.com{WEBHOOK_PATH}"
 
@@ -25,7 +26,7 @@ def home():
 @app.route(WEBHOOK_PATH, methods=["POST"])
 def webhook():
     update = types.Update(**request.json)
-    dp.process_update(update)
+    asyncio.run(dp.process_update(update))
     return "OK"
 
 # ===== Кнопки =====
@@ -150,12 +151,11 @@ async def handle_receipt(message: types.Message):
     )
     await bot.send_message(ADMIN_ID, info_msg)
 
-# ===== Запуск Flask =====
+# ===== Запуск Flask с установкой вебхука =====
 if __name__ == "__main__":
-    # Установим вебхук
-    import asyncio
     async def on_startup():
         await bot.set_webhook(WEBHOOK_URL)
+        logging.info(f"Webhook установлен: {WEBHOOK_URL}")
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(on_startup())
