@@ -1,5 +1,5 @@
 services:
-  - type: worker          # background worker, а не web
+  - type: web
     name: husenov-ff-bot
     env: python
     region: frankfurt
